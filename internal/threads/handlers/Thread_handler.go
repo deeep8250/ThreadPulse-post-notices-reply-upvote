@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"net/http"
@@ -10,10 +10,10 @@ import (
 )
 
 type ThreadHandler struct {
-	services *service.ThreadsService
+	services service.ServiceInterface
 }
 
-func NewThreadHandler(serv *service.ThreadsService) *ThreadHandler {
+func NewThreadHandler(serv service.ServiceInterface) *ThreadHandler {
 	return &ThreadHandler{services: serv}
 }
 
