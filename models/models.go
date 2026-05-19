@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Register struct {
 	Name     string `json:"name" binding:"required"`
