@@ -1,27 +1,27 @@
 name: Go CI
 
-
-
 on:
- push:
- pull_request:
+  push:
+  pull_request:
 jobs:
- test:
-  runs-on: ubuntu-latest
-  env:
-    JWT_SECRET: your_test_secret
-  steps:
-   - name: Get code from github
-     uses: actions/checkout@v4
-   - name: Install Go
-     uses: actions/setup-go@v5
-     with:
-      go-version-file: go.mod
-   - name: Download the package
-     run: go mod download
-   - name: Run tests
-     run: go test ./...
-   - name: Build project
-     run: go build ./...        
-
-
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: your_test_secret
+    steps:
+      - name: Get code from github
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Download the package
+        run: go mod download
+      - name: Verify dependencies
+        run: go mod tidy && git diff --exit-code
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+      - name: Run tests
+        run: go test ./...
+      - name: Build project
+        run: go build ./...
