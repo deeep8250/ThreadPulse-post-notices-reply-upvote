@@ -10,10 +10,10 @@ import (
 )
 
 type RepliesHandler struct {
-	service *service.RepliesService
+	service service.RepliesServiceInterface
 }
 
-func NewRepliesHandler(serv *service.RepliesService) *RepliesHandler {
+func NewRepliesHandler(serv service.RepliesServiceInterface) *RepliesHandler {
 	return &RepliesHandler{
 		service: serv,
 	}
@@ -23,7 +23,7 @@ func (h *RepliesHandler) CreateRepliesHandler(c *gin.Context) {
 
 	postID := c.Param("id")
 	postIDint, err := strconv.Atoi(postID)
-	if err != nil {
+	if err != nil || postIDint <= 0 {
 		c.Error(err)
 		c.Abort()
 		return
