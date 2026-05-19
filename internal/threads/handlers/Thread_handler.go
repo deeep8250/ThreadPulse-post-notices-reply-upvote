@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -120,6 +121,12 @@ func (h *ThreadHandler) UpdateThreadHandler(c *gin.Context) {
 		return
 	}
 
+	if input.Content == "" && input.Title == "" {
+		c.Error(errors.New("invalid inputs"))
+		c.Abort()
+		return
+	}
+
 	userID, ok := c.Get("userID")
 	if !ok {
 		c.Error(err)
@@ -151,7 +158,7 @@ func (h *ThreadHandler) DeleteThreadHandler(c *gin.Context) {
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.Error(err)
+		c.Error(errors.New("unauthorized user"))
 		c.Abort()
 		return
 	}
