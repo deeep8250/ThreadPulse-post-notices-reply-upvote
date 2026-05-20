@@ -100,6 +100,105 @@ func TestCreateReplies(t *testing.T) {
 		})
 	}
 }
+func TestUpdateReplyService(t *testing.T) {
+	os.Setenv("JWT_SECRET", "your_test_secret")
+	tests := []struct {
+		TestName     string
+		Token        string
+		ThreadID     string
+		UserInput    models.Replies
+		ServiceErr   error
+		ExpectedCode int
+	}{
+		{
+			TestName: "success",
+			Token:    "Bearer " + GenerateTestToken(),
+			ThreadID: "1",
+			UserInput: models.Replies{
+
+				Reply: "hello world",
+			},
+			ServiceErr:   nil,
+			ExpectedCode: 200,
+		},
+		{
+			TestName: "invalid input",
+			ThreadID: "1",
+			Token:    "Bearer " + GenerateTestToken(),
+			UserInput: models.Replies{
+
+				PostID: 1,
+				Reply:  "",
+			},
+			ServiceErr:   nil,
+			ExpectedCode: 400,
+		},
+		{
+			TestName: "unauthorized user",
+			ThreadID: "1",
+			Token:    "",
+			UserInput: models.Replies{
+				PostID: 1,
+				Reply:  "hello world",
+			},
+			ServiceErr:   nil,
+			ExpectedCode: 401,
+		},
+		{
+			TestName: "service error",
+			ThreadID: "1",
+			Token:    "Bearer " + GenerateTestToken(),
+			UserInput: models.Replies{
+				PostID: 1,
+				Reply:  "hello world",
+			},
+
+			ServiceErr:   errors.New("something wents wrong"),
+			ExpectedCode: 500,
+		},
+		{
+			TestName: "invalid post id",
+			ThreadID: "0",
+			Token:    "Bearer " + GenerateTestToken(),
+			UserInput: models.Replies{
+				PostID: 0,
+				Reply:  "hello world",
+			},
+
+			ServiceErr:   nil,
+			ExpectedCode: 400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.TestName, func(t *testing.T) {
+			mocking := mock.MockingReplies{
+				UpdateReplyServiceFunc: func(UpdatedReply models.Replies) error {
+					return tt.ServiceErr
+				},
+			}
+			handler := NewRepliesHandler(&mocking)
+			r := gin.Default()
+			r.Use(middleware.ErrorHandler(), middleware.Miiddleware())
+			r.PATCH("/replies/:id", handler.UpdateRepliesHandler)
+			bodyBytes, _ := json.Marshal(tt.UserInput)
+			req, _ := http.NewRequest(http.MethodPatch, "/replies/"+tt.ThreadID, bytes.NewBufferString(string(bodyBytes)))
+			req.Header.Set("Content-Type", "application/json")
+			if tt.Token != "" {
+				req.Header.Set("Authorization", tt.Token)
+			}
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			if w.Code != tt.ExpectedCode {
+				t.Errorf("Expected %d got %d ", tt.ExpectedCode, w.Code)
+			}
+
+		})
+	}
+
+}
+
+func TestDeleteReplyService(t *testing.T) {}
 
 func GenerateTestToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
