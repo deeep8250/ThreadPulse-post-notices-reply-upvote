@@ -104,7 +104,7 @@ func (h *RepliesHandler) GetAllRepliesHandler(c *gin.Context) {
 func (h *RepliesHandler) UpdateRepliesHandler(c *gin.Context) {
 	ReplyID := c.Param("id")
 	ReplyIdInt, err := strconv.Atoi(ReplyID)
-	if err != nil {
+	if err != nil || ReplyIdInt <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid url parameter",
 		})
