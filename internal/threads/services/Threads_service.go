@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/threadpulse/internal/config"
 	"github.com/threadpulse/internal/threads/repository"
 	"github.com/threadpulse/models"
 	"golang.org/x/net/context"
@@ -15,10 +16,10 @@ type ThreadsService struct {
 	redisClient *redis.Client
 }
 
-func NewThreadsService(repo *repository.ThreadsRepo, redisC *redis.Client) *ThreadsService {
+func NewThreadsService(repo *repository.ThreadsRepo) *ThreadsService {
 	return &ThreadsService{
 		repo:        repo,
-		redisClient: redisC,
+		redisClient: config.RedisClient,
 	}
 
 }

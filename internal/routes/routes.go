@@ -3,45 +3,78 @@ package routes
 import (
 	"time"
 
+	"github.com/threadpulse/internal/config"
+	replieshandler "github.com/threadpulse/internal/replies/handlers"
+	repliesrepo "github.com/threadpulse/internal/replies/repository"
+	repliesservice "github.com/threadpulse/internal/replies/services"
+	threadhandler "github.com/threadpulse/internal/threads/handlers"
+	threadrepo "github.com/threadpulse/internal/threads/repository"
+	threadservice "github.com/threadpulse/internal/threads/services"
+
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	auth "github.com/threadpulse/internal/auth/handlers"
+	authhandler "github.com/threadpulse/internal/auth/handlers"
+	authrepo "github.com/threadpulse/internal/auth/repository"
+	authservice "github.com/threadpulse/internal/auth/services"
 	"github.com/threadpulse/internal/middleware"
-	replies "github.com/threadpulse/internal/replies/handlers"
-	thread "github.com/threadpulse/internal/threads/handlers"
-	upvote "github.com/threadpulse/internal/upvotes/handlers"
+	upvotehandler "github.com/threadpulse/internal/upvotes/handlers"
+	upvoterepo "github.com/threadpulse/internal/upvotes/repositories"
+	upvoteservice "github.com/threadpulse/internal/upvotes/services"
 )
 
-func Routes(r *gin.Engine, auth *auth.AuthHandler, ThreadHandler *thread.ThreadHandler, RepliesHandler *replies.RepliesHandler, upvote *upvote.UpvoteHandler, redisClient *redis.Client) {
+func Routes() {
+	r := gin.Default()
+	r.Use(middleware.ErrorHandler())
+
+	AuthRepo := authrepo.NewAuthRepo()
+	AuthService := authservice.NewAuthService(AuthRepo)
+	AuthHandler := authhandler.NewAuthHandler(AuthService)
 
 	authHandler := r.Group("/auth")
 	{
-		authHandler.POST("/register", auth.RegisterHandler)
-		authHandler.POST("/login", auth.Login)
+		authHandler.POST("/register", AuthHandler.RegisterHandler)
+		authHandler.POST("/login", AuthHandler.Login)
 	}
+
+	RepliesRepo := repliesrepo.NewRepliesRepo()
+	repliesService := repliesservice.NewRepliesService(RepliesRepo)
+	repliesHandler := replieshandler.NewRepliesHandler(repliesService)
+
+	//threads
+	ThreadRepo := threadrepo.NewThreadRepo()
+	ThreadService := threadservice.NewThreadsService(ThreadRepo)
+	ThreadHandler := threadhandler.NewThreadHandler(ThreadService)
+
+	// upvotes
+	UpvoteRepo := upvoterepo.NewUpvotesRepository()
+	UpvoteWorker := upvoterepo.NewUpvoteWorker(UpvoteRepo)
+	UpvoteWorker.Start()
+	UpvoteService := upvoteservice.NewUpvoteService(UpvoteRepo, UpvoteWorker)
+	UpvoteHandler := upvotehandler.NewUpvoteHandler(UpvoteService)
 
 	Protected := r.Group("/private", middleware.Miiddleware())
 	{
-		Protected.POST("/thread", middleware.RateLimiter(redisClient, 5, time.Minute), ThreadHandler.CreateThreadHandler)
-		Protected.PATCH("/thread/:id", middleware.RateLimiter(redisClient, 5, time.Minute), ThreadHandler.UpdateThreadHandler)
+		Protected.POST("/thread", middleware.RateLimiter(config.RedisClient, 5, time.Minute), ThreadHandler.CreateThreadHandler)
+		Protected.PATCH("/thread/:id", middleware.RateLimiter(config.RedisClient, 5, time.Minute), ThreadHandler.UpdateThreadHandler)
 		Protected.DELETE("/thread/:id", ThreadHandler.DeleteThreadHandler)
 
 		//replies
-		Protected.POST("/thread/:id/reply", RepliesHandler.CreateRepliesHandler)
-		Protected.PATCH("/thread/reply/:id", RepliesHandler.UpdateRepliesHandler)
-		Protected.DELETE("/thread/reply/:id", RepliesHandler.DeleteReplyHandler)
+		Protected.POST("/thread/:id/reply", repliesHandler.CreateRepliesHandler)
+		Protected.PATCH("/thread/reply/:id", repliesHandler.UpdateRepliesHandler)
+		Protected.DELETE("/thread/reply/:id", repliesHandler.DeleteReplyHandler)
 
 		//upvotes
-		Protected.POST("/thread/:id/upvote", upvote.Upvote)
+		Protected.POST("/thread/:id/upvote", UpvoteHandler.Upvote)
 
 	}
 	Public := r.Group("/public")
 	{
 		Public.GET("/threads", ThreadHandler.GetAllThreadHandler)
 		Public.GET("/thread/:id", ThreadHandler.GetThreadByIdHandler)
-		Public.GET("/thread/:id/replies", RepliesHandler.GetAllRepliesHandler)
-		Public.GET("/thread/:id/upvotes", upvote.GetAllUpvotes)
+		Public.GET("/thread/:id/replies", repliesHandler.GetAllRepliesHandler)
+		Public.GET("/thread/:id/upvotes", UpvoteHandler.GetAllUpvotes)
 		Public.GET("/thread/hot", ThreadHandler.GetHotThreads)
 	}
+
+	r.Run(":8080")
 
 }

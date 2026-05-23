@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/threadpulse/internal/config"
 	"github.com/threadpulse/models"
 )
 
@@ -12,9 +13,9 @@ type ThreadsRepo struct {
 	Db *sqlx.DB
 }
 
-func NewThreadRepo(db *sqlx.DB) *ThreadsRepo {
+func NewThreadRepo() *ThreadsRepo {
 	return &ThreadsRepo{
-		Db: db,
+		Db: config.PostgisDB,
 	}
 }
 

@@ -198,7 +198,75 @@ func TestUpdateReplyService(t *testing.T) {
 
 }
 
-func TestDeleteReplyService(t *testing.T) {}
+func TestDeleteReplyService(t *testing.T) {
+	os.Setenv("JWT_SECRET", "your_test_secret")
+	tests := []struct {
+		TestName     string
+		Token        string
+		ReplyID      string
+		ServiceErr   error
+		ExpectedCode int
+	}{
+		{
+			TestName:     "success",
+			Token:        "Bearer " + GenerateTestToken(),
+			ReplyID:      "1",
+			ServiceErr:   nil,
+			ExpectedCode: 200,
+		},
+		{
+			TestName: "invalid input",
+			ReplyID:  "0",
+			Token:    "Bearer " + GenerateTestToken(),
+
+			ServiceErr:   nil,
+			ExpectedCode: 400,
+		},
+		{
+			TestName: "unauthorized user",
+			ReplyID:  "1",
+			Token:    "",
+
+			ServiceErr:   nil,
+			ExpectedCode: 401,
+		},
+		{
+			TestName: "service error",
+			ReplyID:  "1",
+			Token:    "Bearer " + GenerateTestToken(),
+
+			ServiceErr:   errors.New("something wents wrong"),
+			ExpectedCode: 500,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.TestName, func(t *testing.T) {
+			mocking := mock.MockingReplies{
+				DeleteReplyServiceFunc: func(replyId, userID int) error {
+					return tt.ServiceErr
+				},
+			}
+			handler := NewRepliesHandler(&mocking)
+			r := gin.Default()
+			r.Use(middleware.ErrorHandler(), middleware.Miiddleware())
+			r.DELETE("/replies/:id", handler.DeleteReplyHandler)
+
+			req, _ := http.NewRequest(http.MethodDelete, "/replies/"+tt.ReplyID, nil)
+			req.Header.Set("Content-Type", "application/json")
+			if tt.Token != "" {
+				req.Header.Set("Authorization", tt.Token)
+			}
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			if w.Code != tt.ExpectedCode {
+				t.Errorf("Expected %d got %d ", tt.ExpectedCode, w.Code)
+			}
+
+		})
+	}
+
+}
 
 func GenerateTestToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

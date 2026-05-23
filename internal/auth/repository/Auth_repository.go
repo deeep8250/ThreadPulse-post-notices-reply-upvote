@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/threadpulse/internal/config"
 	"github.com/threadpulse/models"
 )
 
@@ -11,9 +12,9 @@ type AuthRepo struct {
 	DB *sqlx.DB
 }
 
-func NewAuthRepo(db *sqlx.DB) *AuthRepo {
+func NewAuthRepo() *AuthRepo {
 	return &AuthRepo{
-		DB: db,
+		DB: config.PostgisDB,
 	}
 
 }

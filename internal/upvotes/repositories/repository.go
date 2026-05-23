@@ -4,15 +4,16 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/threadpulse/internal/config"
 )
 
 type UpvotesRepository struct {
 	db *sqlx.DB
 }
 
-func NewUpvotesRepository(Db *sqlx.DB) *UpvotesRepository {
+func NewUpvotesRepository() *UpvotesRepository {
 	return &UpvotesRepository{
-		db: Db,
+		db: config.PostgisDB,
 	}
 }
 

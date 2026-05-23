@@ -148,9 +148,12 @@ func (h *RepliesHandler) UpdateRepliesHandler(c *gin.Context) {
 func (h *RepliesHandler) DeleteReplyHandler(c *gin.Context) {
 	replyID := c.Param("id")
 	replyIdInt, err := strconv.Atoi(replyID)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || replyIdInt <= 0 {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid reply id",
+		})
+
 		return
 	}
 

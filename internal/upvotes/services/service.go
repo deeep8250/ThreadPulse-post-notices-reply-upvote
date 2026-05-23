@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/threadpulse/internal/config"
 	"github.com/threadpulse/internal/upvotes/repositories"
 )
 
@@ -15,11 +16,11 @@ type UpvoteService struct {
 	redisClient *redis.Client
 }
 
-func NewUpvoteService(Repo *repositories.UpvotesRepository, Worker *repositories.UpvoteWorker, Rc *redis.Client) *UpvoteService {
+func NewUpvoteService(Repo *repositories.UpvotesRepository, Worker *repositories.UpvoteWorker) *UpvoteService {
 	return &UpvoteService{
 		repo:        Repo,
 		worker:      Worker,
-		redisClient: Rc,
+		redisClient: config.RedisClient,
 	}
 }
 
