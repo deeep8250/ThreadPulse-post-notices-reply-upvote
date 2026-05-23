@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
+	"github.com/threadpulse/internal/config"
 )
 
-func RateLimiter(redisClient *redis.Client, limit int, duration time.Duration) gin.HandlerFunc {
+func RateLimiter(limit int, duration time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("userID")
 		if !ok {
@@ -19,7 +19,7 @@ func RateLimiter(redisClient *redis.Client, limit int, duration time.Duration) g
 			return
 		}
 		key := fmt.Sprintf("rate_limit:user:%v:%s", userID, c.FullPath())
-		count, err := redisClient.Incr(c.Request.Context(), key).Result()
+		count, err := config.RedisClient.Incr(c.Request.Context(), key).Result()
 		if err != nil {
 			c.Error(err)
 			c.Abort()
@@ -28,7 +28,7 @@ func RateLimiter(redisClient *redis.Client, limit int, duration time.Duration) g
 
 		//setting the ttl
 		if count == 1 {
-			redisClient.Expire(c.Request.Context(), key, duration)
+			config.RedisClient.Expire(c.Request.Context(), key, duration)
 		}
 
 		//checking the limit

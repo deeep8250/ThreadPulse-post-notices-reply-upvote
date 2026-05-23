@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -22,16 +21,18 @@ func NewUpvoteHandler(Serv *services.UpvoteService) *UpvoteHandler {
 func (h *UpvoteHandler) Upvote(c *gin.Context) {
 	postIDstring := c.Param("id")
 	postID, err := strconv.Atoi(postIDstring)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || postID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.Error(errors.New("unauthorized user"))
-		c.Abort()
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user",
+		})
 		return
 	}
 
@@ -41,17 +42,20 @@ func (h *UpvoteHandler) Upvote(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": "upvoted",
 	})
+
 }
 
 func (h *UpvoteHandler) GetAllUpvotes(c *gin.Context) {
 	postIDstring := c.Param("id")
 	postID, err := strconv.Atoi(postIDstring)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || postID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 

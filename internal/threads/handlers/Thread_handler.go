@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -38,9 +37,8 @@ func (h *ThreadHandler) CreateThreadHandler(c *gin.Context) {
 
 	err = h.services.CreateThread(userID.(int), Thread)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "something went wrong while creating the thread",
-		})
+		c.Error(err)
+		c.Abort()
 		return
 	}
 
@@ -53,16 +51,18 @@ func (h *ThreadHandler) CreateThreadHandler(c *gin.Context) {
 func (h *ThreadHandler) GetAllThreadHandler(c *gin.Context) {
 	limit := c.DefaultQuery("limit", "10")
 	LimitInt, err := strconv.Atoi(limit)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || LimitInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 	page := c.DefaultQuery("page", "1")
 	PageInt, err := strconv.Atoi(page)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || PageInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -83,9 +83,10 @@ func (h *ThreadHandler) GetAllThreadHandler(c *gin.Context) {
 func (h *ThreadHandler) GetThreadByIdHandler(c *gin.Context) {
 	id := c.Param("id")
 	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || idInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -106,9 +107,10 @@ func (h *ThreadHandler) UpdateThreadHandler(c *gin.Context) {
 
 	id := c.Param("id")
 	IdInt, err := strconv.Atoi(id)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || IdInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
@@ -116,22 +118,29 @@ func (h *ThreadHandler) UpdateThreadHandler(c *gin.Context) {
 
 	err = c.ShouldBindJSON(&input)
 	if err != nil {
-		c.Error(err)
-		c.Abort()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
 	if input.Content == "" && input.Title == "" {
-		c.Error(errors.New("invalid inputs"))
-		c.Abort()
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
+
 	}
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.Error(err)
-		c.Abort()
+
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user",
+		})
 		return
+
 	}
 
 	err = h.services.UpdateThread(IdInt, userID.(int), input)
@@ -150,16 +159,19 @@ func (h *ThreadHandler) UpdateThreadHandler(c *gin.Context) {
 func (h *ThreadHandler) DeleteThreadHandler(c *gin.Context) {
 	id := c.Param("id")
 	IdInt, err := strconv.Atoi(id)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || IdInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
+
 	}
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.Error(errors.New("unauthorized user"))
-		c.Abort()
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user",
+		})
 		return
 	}
 	err = h.services.DeleteThread(IdInt, userID.(int))
@@ -178,9 +190,10 @@ func (h *ThreadHandler) DeleteThreadHandler(c *gin.Context) {
 func (h *ThreadHandler) GetHotThreads(c *gin.Context) {
 	limit := c.DefaultQuery("limit", "2")
 	limitInt, err := strconv.Atoi(limit)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || limitInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 

@@ -24,23 +24,27 @@ func (h *RepliesHandler) CreateRepliesHandler(c *gin.Context) {
 	postID := c.Param("id")
 	postIDint, err := strconv.Atoi(postID)
 	if err != nil || postIDint <= 0 {
-		c.Error(err)
-		c.Abort()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
 	var reply models.Replies
 	err = c.ShouldBindJSON(&reply)
 	if err != nil {
-		c.Error(err)
-		c.Abort()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
 	userID, ok := c.Get("userID")
+
 	if !ok {
-		c.Error(err)
-		c.Abort()
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user",
+		})
 		return
 	}
 
@@ -64,25 +68,28 @@ func (h *RepliesHandler) GetAllRepliesHandler(c *gin.Context) {
 
 	PostId := c.Param("id")
 	PostIdInt, err := strconv.Atoi(PostId)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || PostIdInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
 	limit := c.DefaultQuery("limit", "5")
 
 	limitInt, err := strconv.Atoi(limit)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || limitInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 	page := c.DefaultQuery("page", "1")
 	pageInt, err := strconv.Atoi(page)
-	if err != nil {
-		c.Error(err)
-		c.Abort()
+	if err != nil || pageInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid input",
+		})
 		return
 	}
 
@@ -133,9 +140,8 @@ func (h *RepliesHandler) UpdateRepliesHandler(c *gin.Context) {
 
 	err = h.service.UpdateReplyService(replyUpdated)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
+		c.Abort()
 		return
 	}
 
@@ -159,9 +165,12 @@ func (h *RepliesHandler) DeleteReplyHandler(c *gin.Context) {
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.Error(err)
-		c.Abort()
+
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user",
+		})
 		return
+
 	}
 
 	err = h.service.DeleteReplyService(replyIdInt, userID.(int))

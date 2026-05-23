@@ -3,7 +3,6 @@ package routes
 import (
 	"time"
 
-	"github.com/threadpulse/internal/config"
 	replieshandler "github.com/threadpulse/internal/replies/handlers"
 	repliesrepo "github.com/threadpulse/internal/replies/repository"
 	repliesservice "github.com/threadpulse/internal/replies/services"
@@ -53,8 +52,8 @@ func Routes() {
 
 	Protected := r.Group("/private", middleware.Miiddleware())
 	{
-		Protected.POST("/thread", middleware.RateLimiter(config.RedisClient, 5, time.Minute), ThreadHandler.CreateThreadHandler)
-		Protected.PATCH("/thread/:id", middleware.RateLimiter(config.RedisClient, 5, time.Minute), ThreadHandler.UpdateThreadHandler)
+		Protected.POST("/thread", middleware.RateLimiter(5, time.Minute), ThreadHandler.CreateThreadHandler)
+		Protected.PATCH("/thread/:id", middleware.RateLimiter(5, time.Minute), ThreadHandler.UpdateThreadHandler)
 		Protected.DELETE("/thread/:id", ThreadHandler.DeleteThreadHandler)
 
 		//replies
