@@ -124,7 +124,7 @@ func TestSUpdateThreadHandler(t *testing.T) {
 				Content: "",
 			},
 			ServiceErr:   nil,
-			ExepctedCode: 500,
+			ExepctedCode: 400,
 		},
 		{
 			TestName: "unauthorized user",
@@ -196,7 +196,7 @@ func TestDeleteThreadHandler(t *testing.T) {
 			Token:        "Bearer " + GenerateTestToken(),
 			ThreadID:     "abc",
 			ServiceErr:   nil,
-			ExpectedCode: 500, // or 400 if your ErrorHandler returns BadRequest
+			ExpectedCode: 400, // or 400 if your ErrorHandler returns BadRequest
 		},
 		{
 			TestName:     "unauthorized user",
