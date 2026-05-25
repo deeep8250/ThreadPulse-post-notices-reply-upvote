@@ -3,6 +3,7 @@ package routes
 import (
 	"time"
 
+	"github.com/gin-contrib/cors"
 	replieshandler "github.com/threadpulse/internal/replies/handlers"
 	repliesrepo "github.com/threadpulse/internal/replies/repository"
 	repliesservice "github.com/threadpulse/internal/replies/services"
@@ -22,6 +23,15 @@ import (
 
 func Routes() {
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+	}))
+
 	r.Use(middleware.ErrorHandler())
 
 	AuthRepo := authrepo.NewAuthRepo()
